@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>DARMA - Tes Koneksi Apps Script</title>
+<style>
+  body{ font-family: sans-serif; max-width:600px; margin:40px auto; padding:0 20px; background:#F2EEE6; }
+  h2{ color:#2D3A34; }
+  button{ background:#4F6B58; color:white; border:none; padding:14px 24px; border-radius:8px; font-size:16px; cursor:pointer; width:100%; margin:8px 0; }
+  #log{ background:white; border-radius:8px; padding:16px; margin-top:20px; font-family: monospace; font-size:13px; white-space:pre-wrap; min-height:100px; border:1px solid #ddd; }
+  input{ width:100%; padding:10px; margin-bottom:10px; box-sizing:border-box; border-radius:6px; border:1px solid #ccc; }
+</style>
+</head>
+<body>
+<h2>🔧 Tes Koneksi Apps Script DARMA</h2>
+<p>Tempel GAS_URL kamu di bawah, lalu klik kirim. Ini akan mengirim 1 baris data dummy ke Sheet LEADS untuk memastikan koneksinya benar2 jalan.</p>
+
+<input type="text" id="gasUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+
+<button onclick="testGet()">1. Tes GET (cek script aktif)</button>
+<button onclick="testPost()">2. Tes POST (kirim data dummy ke Sheet)</button>
+
+<div id="log">Hasil akan muncul di sini...</div>
+
+<script>
+function log(msg){
+  document.getElementById('log').textContent += msg + '\n\n';
+}
+
+function testGet(){
+  const url = document.getElementById('gasUrl').value.trim();
+  if(!url){ alert('Isi GAS_URL dulu'); return; }
+  document.getElementById('log').textContent = 'Mengirim GET request...\n\n';
+  fetch(url)
+    .then(res => res.text())
+    .then(text => log('✓ GET berhasil dibaca:\n' + text))
+    .catch(err => log('✗ GET gagal: ' + err.message));
+}
+
+function testPost(){
+  const url = document.getElementById('gasUrl').value.trim();
+  if(!url){ alert('Isi GAS_URL dulu'); return; }
+
+  const dummyPayload = {
+    nama: "TEST DIAGNOSTIK",
+    wa: "081200000000",
+    email: "test@diagnostik.com",
+    job: "Test",
+    keluhan: "Test koneksi",
+    tes: "Diagnostic Test",
+    profile: "Test Profile",
+    score: 99,
+    kategori: "Test",
+    dim_fear: 1, dim_worth: 1, dim_confidence: 1, dim_scarcity: 1, dim_avoidance: 1,
+    source: "Diagnostic Tool"
+  };
+
+  document.getElementById('log').textContent = 'Mengirim POST request dengan data dummy...\n\nPayload: ' + JSON.stringify(dummyPayload, null, 2) + '\n\n';
+
+  fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(dummyPayload)
+  })
+  .then(res => {
+    log('Response type: ' + res.type + ' | status: ' + res.status);
+    if(res.type === 'opaque'){
+      log('⚠ Response opaque (tidak bisa dibaca karena CORS) — TAPI ini NORMAL untuk Apps Script. Request kemungkinan besar TETAP terkirim ke server. Silakan cek langsung di Google Sheets sekarang: apakah ada baris baru dengan nama "TEST DIAGNOSTIK"?');
+      return null;
+    }
+    return res.text();
+  })
+  .then(text => {
+    if(text === null) return;
+    log('✓ Response berhasil dibaca:\n' + text);
+  })
+  .catch(err => {
+    log('✗ POST gagal total (network error): ' + err.message + '\n\nIni berarti request TIDAK terkirim sama sekali. Cek: apakah GAS_URL benar persis (tidak ada spasi/typo)?');
+  });
+}
+</script>
+</body>
+</html>
